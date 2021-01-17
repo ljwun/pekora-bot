@@ -104,10 +104,10 @@ func handleBot(c *gin.Context) {
 	)
 	switch botSession.RequestType {
 	case "Text":
-		text := botSession.Request
-		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, string(text))
+		text := botSession.RequestText
+		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
 	case "Audio":
-		audio := []byte(botSession.Request)
+		audio := botSession.RequestAudio
 		fulfillmentText, fulfillmentMessages, err = DetectIntentAudio(projectID, sessionID, languageCode, audio)
 	}
 	if err != nil {
@@ -127,5 +127,6 @@ func handleBot(c *gin.Context) {
 type BotSession struct {
 	SessionID   string	`json:"sessionID"`
 	RequestType string	`json:"requestType"`
-	Request     []byte	`json:"request"`
+	RequestAudio     []byte	`json:"voice"`
+	RequestText     string	`json:"text"`
 }
