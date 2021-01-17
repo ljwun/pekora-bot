@@ -1,0 +1,133 @@
+package main
+
+import (
+	"fmt"
+	"net/http"
+
+	"context"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+
+	dialogflow "cloud.google.com/go/dialogflow/apiv2"
+	dialogflowpb "google.golang.org/genproto/googleapis/cloud/dialogflow/v2"
+)
+
+const (
+	projectID    string = "devbot-shwx"
+	languageCode string = "zh-TW"
+)
+
+//DetectIntentText : Detect Intent via text and get text message from dialogflow
+func DetectIntentText(projectID, sessionID, languageCode, text string) (string, error) {
+	ctx := context.Background()
+
+	sessionClient, err := dialogflow.NewSessionsClient(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer sessionClient.Close()
+
+	if projectID == "" || sessionID == "" {
+		return "", fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
+	}
+
+	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
+	textInput := dialogflowpb.TextInput{Text: text, LanguageCode: languageCode}
+	queryTextInput := dialogflowpb.QueryInput_Text{Text: &textInput}
+	queryInput := dialogflowpb.QueryInput{Input: &queryTextInput}
+	request := dialogflowpb.DetectIntentRequest{Session: sessionPath, QueryInput: &queryInput}
+
+	response, err := sessionClient.DetectIntent(ctx, &request)
+	if err != nil {
+		return "", err
+	}
+
+	queryResult := response.GetQueryResult()
+	fmt.Printf("Query : %+v\n", queryResult.QueryText)
+	fulfillmentText := queryResult.GetFulfillmentText()
+	return fulfillmentText, nil
+}
+
+//DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
+func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []byte) (string, error) {
+	ctx := context.Background()
+
+	sessionClient, err := dialogflow.NewSessionsClient(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer sessionClient.Close()
+
+	if projectID == "" || sessionID == "" {
+		return "", fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
+	}
+
+	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
+
+	// In this example, we hard code the encoding and sample rate for simplicity.
+	audioConfig := dialogflowpb.InputAudioConfig{AudioEncoding: dialogflowpb.AudioEncoding_AUDIO_ENCODING_OGG_OPUS, SampleRateHertz: 16000, LanguageCode: languageCode}
+
+	queryAudioInput := dialogflowpb.QueryInput_AudioConfig{AudioConfig: &audioConfig}
+
+	// audioBytes, err := ioutil.ReadFile(audioFile)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	queryInput := dialogflowpb.QueryInput{Input: &queryAudioInput}
+	request := dialogflowpb.DetectIntentRequest{Session: sessionPath, QueryInput: &queryInput, InputAudio: audioBytes}
+
+	response, err := sessionClient.DetectIntent(ctx, &request)
+	if err != nil {
+		return "", err
+	}
+
+	queryResult := response.GetQueryResult()
+	fmt.Printf("Query : %+v\n", queryResult.QueryText)
+	fulfillmentText := queryResult.GetFulfillmentText()
+	return fulfillmentText, nil
+}
+
+func handleBotText(c *gin.Context) {
+	botSession := BotSession{}
+	if err := c.ShouldBindJSON(&botSession); err != nil {
+		logrus.Println(err)
+		c.AbortWithError(http.StatusBadRequest, err)
+	}
+	sessionID := botSession.SessionID
+
+	var (
+		result string
+		err    error
+	)
+	switch botSession.RequestType {
+	case "Text":
+		text := botSession.Request
+		result, err = DetectIntentText(projectID, sessionID, languageCode, text)
+	case "Audio":
+		text := botSession.Request
+		result, err = DetectIntentText(projectID, sessionID, languageCode, text)
+	}
+	if err != nil {
+		logrus.Println(err)
+		c.AbortWithError(http.StatusBadRequest, err)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"sessionID":    sessionID,
+		"projectID":    projectID,
+		"languageCode": languageCode,
+		"response": gin.H{
+			"text": result,
+		},
+	})
+}
+func handleBotVoice(c *gin.Context) {
+
+}
+//BotSession is data change between bot and api
+type BotSession struct {
+	SessionID   string
+	RequestType string
+	Request     string
+}
