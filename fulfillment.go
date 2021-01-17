@@ -34,13 +34,14 @@ func handleWebhook(c *gin.Context) {
 				start string
 				end   string
 			}{}
-			if params["date-time"].GetStructValue().Fields["startDate"].GetStringValue() != "" {
+			switch {
+			case params["date-time"].GetStructValue().Fields["startDate"].GetStringValue() != "":
 				datetime.start = params["date-time"].GetStructValue().Fields["startDate"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endDate"].GetStringValue()
-			} else if params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue() != "" {
+			case params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue() != "":
 				datetime.start = params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endDateTime"].GetStringValue()
-			} else {
+			default:
 				datetime.start = params["date-time"].GetStructValue().Fields["startTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endTime"].GetStringValue()
 			}
