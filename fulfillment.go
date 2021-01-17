@@ -25,21 +25,24 @@ func handleWebhook(c *gin.Context) {
 	params := wReq.QueryResult.Parameters.Fields
 	switch wReq.QueryResult.Intent.DisplayName {
 	case "開台詢問":
-		if params["date-time"].GetStringValue()!=""{
+		if params["date-time"].GetStringValue() != "" {
 			msg = fmt.Sprintf("Intent:%s\ndatetime:%s\nholoname:%s", wReq.QueryResult.Intent.DisplayName,
 				params["date-time"].GetStringValue(),
 				params["holoname"].GetStringValue())
-		}else{
+		} else {
 			datetime := struct {
-				start	string
-				end		string
+				start string
+				end   string
 			}{}
-			if params["date-time"].GetStructValue().Fields["startDate"].GetStringValue()!=""{
+			if params["date-time"].GetStructValue().Fields["startDate"].GetStringValue() != "" {
 				datetime.start = params["date-time"].GetStructValue().Fields["startDate"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endDate"].GetStringValue()
-			}else{
+			} else if params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue() != "" {
 				datetime.start = params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endDateTime"].GetStringValue()
+			} else {
+				datetime.start = params["date-time"].GetStructValue().Fields["startTime"].GetStringValue()
+				datetime.end = params["date-time"].GetStructValue().Fields["endTime"].GetStringValue()
 			}
 			msg = fmt.Sprintf("Intent:%s\nholoname:%s\nfrom:\n%v\nto:\n%v",
 				wReq.QueryResult.Intent.DisplayName,
@@ -72,4 +75,3 @@ func handleWebhook(c *gin.Context) {
 		c.AbortWithError(http.StatusOK, err)
 	}
 }
-
