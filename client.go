@@ -115,7 +115,6 @@ func handleBot(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"sessionID":    sessionID,
-		"projectID":    projectID,
 		"languageCode": languageCode,
 		"response": gin.H{
 			"text": fulfillmentText,
