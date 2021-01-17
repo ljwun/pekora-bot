@@ -97,7 +97,7 @@ func handleBot(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
 	sessionID := botSession.SessionID
-	fmt.Println(len([]byte(botSession.Request)))
+	fmt.Println(botSession.Request[:10])
 	var (
 		fulfillmentText string
 		fulfillmentMessages []string
