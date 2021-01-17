@@ -130,6 +130,6 @@ func handleBotVoice(c *gin.Context) {
 //BotSession is data change between bot and api
 type BotSession struct {
 	SessionID   string	`json:"sessionID"`
-	RequestType string	`json:"requestID"`
+	RequestType string	`json:"requestType"`
 	Request     string	`json:"request"`
 }
