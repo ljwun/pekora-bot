@@ -45,7 +45,7 @@ func DetectIntentText(projectID, sessionID, languageCode, text string) (string, 
 
 	queryResult := response.GetQueryResult()
 	fulfillmentText := queryResult.GetFulfillmentText()
-	fmt.Println(queryResult.FulfillmentMessages[0].Message)
+	fmt.Println(queryResult.FulfillmentMessages)
 	return fulfillmentText, nil
 }
 

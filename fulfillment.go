@@ -63,7 +63,7 @@ func handleWebhook(c *gin.Context) {
 		msg = "err"
 	}
 	wRes := dialogflow.WebhookResponse{
-		FulfillmentText: " OAOAOAOAO!!! ",
+		FulfillmentText: msg,
 		FulfillmentMessages: []*dialogflow.Intent_Message{
 			{
 				Message: &dialogflow.Intent_Message_Text_{
