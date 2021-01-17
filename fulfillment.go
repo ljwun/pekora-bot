@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/jsonpb"
@@ -21,14 +22,23 @@ func handleWebhook(c *gin.Context) {
 	fmt.Printf("%10s : %+v\n", "Intent", wReq.QueryResult.Intent.DisplayName)
 	fmt.Printf("%10s : %+v\n", "Parameter", wReq.QueryResult.Parameters)
 	fmt.Printf("%10s : %+v\n", "Text", wReq.QueryResult.QueryText)
-	msg := ""
+	msg := fmt.Sprintln("Intent:",wReq.QueryResult.Intent.DisplayName)
 	params := wReq.QueryResult.Parameters.Fields
 	switch wReq.QueryResult.Intent.DisplayName {
 	case "開台詢問":
+		//成員
+		members := []string{}
+		if params["holoname"].GetStringValue() != ""{
+			members = append(members, params["holoname"].GetStringValue())
+		}else{
+			for _, member := range params["holoname"].GetListValue().Values{
+				members = append(members, member.GetStringValue())
+			}
+		}
+		msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
+		//時間
 		if params["date-time"].GetStringValue() != "" {
-			msg = fmt.Sprintf("Intent:%s\ndatetime:%s\nholoname:%s", wReq.QueryResult.Intent.DisplayName,
-				params["date-time"].GetStringValue(),
-				params["holoname"].GetStringValue())
+			msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
 		} else {
 			datetime := struct {
 				start string
@@ -45,11 +55,7 @@ func handleWebhook(c *gin.Context) {
 				datetime.start = params["date-time"].GetStructValue().Fields["startTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endTime"].GetStringValue()
 			}
-			msg = fmt.Sprintf("Intent:%s\nholoname:%s\nfrom:\n%v\nto:\n%v",
-				wReq.QueryResult.Intent.DisplayName,
-				params["holoname"].GetStringValue(),
-				datetime.start,
-				datetime.end)
+			msg = fmt.Sprintf("%sfrom:\n%v\nto:\n%v", msg, datetime.start, datetime.end)
 		}
 	case "webhookDemo":
 		msg = "2"
