@@ -96,7 +96,7 @@ func handleBotText(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
 	sessionID := botSession.SessionID
-
+	fmt.Printf("%+v\n",botSession)
 	var (
 		fulfillmentText string
 		fulfillmentMessages []string
