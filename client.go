@@ -51,8 +51,6 @@ func DetectIntentText(projectID, sessionID, languageCode, text string) (string, 
 
 //DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
 func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []byte) (string, []string, error) {
-	fmt.Printf("%+v\n", audioBytes)
-	return "",[]string{},nil
 	ctx := context.Background()
 
 	sessionClient, err := dialogflow.NewSessionsClient(ctx)
