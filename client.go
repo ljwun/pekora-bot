@@ -45,7 +45,7 @@ func DetectIntentText(projectID, sessionID, languageCode, text string) (string, 
 
 	queryResult := response.GetQueryResult()
 	fulfillmentText := queryResult.GetFulfillmentText()
-	fmt.Println(queryResult.FulfillmentMessages)
+	fmt.Println(queryResult.FulfillmentMessages[0].GetText().Text)
 	return fulfillmentText, nil
 }
 
@@ -127,7 +127,7 @@ func handleBotVoice(c *gin.Context) {
 }
 //BotSession is data change between bot and api
 type BotSession struct {
-	SessionID   string
-	RequestType string
-	Request     string
+	SessionID   string	`json:"sessionID"`
+	RequestType string	`json:"requestID"`
+	Request     string	`json:"request"`
 }
