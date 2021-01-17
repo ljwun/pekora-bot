@@ -50,17 +50,17 @@ func DetectIntentText(projectID, sessionID, languageCode, text string) (string, 
 }
 
 //DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
-func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []byte) (string, error) {
+func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []byte) (string, []string, error) {
 	ctx := context.Background()
 
 	sessionClient, err := dialogflow.NewSessionsClient(ctx)
 	if err != nil {
-		return "", err
+		return "", []string{}, err
 	}
 	defer sessionClient.Close()
 
 	if projectID == "" || sessionID == "" {
-		return "", fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
+		return "", []string{}, fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
 	}
 
 	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
@@ -80,13 +80,14 @@ func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []b
 
 	response, err := sessionClient.DetectIntent(ctx, &request)
 	if err != nil {
-		return "", err
+		return "", []string{}, err
 	}
 
 	queryResult := response.GetQueryResult()
 	fmt.Printf("Query : %+v\n", queryResult.QueryText)
 	fulfillmentText := queryResult.GetFulfillmentText()
-	return fulfillmentText, nil
+	fulfillmentMessages := queryResult.FulfillmentMessages[0].GetText().Text
+	return fulfillmentText, fulfillmentMessages, nil
 }
 
 func handleBot(c *gin.Context) {
@@ -106,8 +107,8 @@ func handleBot(c *gin.Context) {
 		text := botSession.Request
 		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
 	case "Audio":
-		audio := botSession.Request
-		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, audio)
+		audio := []byte(botSession.Request)
+		fulfillmentText, fulfillmentMessages, err = DetectIntentAudio(projectID, sessionID, languageCode, audio)
 	}
 	if err != nil {
 		logrus.Println(err)
