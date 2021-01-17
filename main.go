@@ -14,8 +14,7 @@ func main() {
 
 	r := gin.Default()
 	r.POST("/webhook", handleWebhook)
-	r.POST("/bot/text", handleBotText)
-	r.POST("/bot/voice", handleBotVoice)
+	r.POST("/bot", handleBot)
 
 	if err = r.Run(fmt.Sprint(":", port)); err != nil {
 		logrus.WithError(err).Fatal("Couldn't start server")

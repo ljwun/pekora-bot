@@ -89,7 +89,7 @@ func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []b
 	return fulfillmentText, nil
 }
 
-func handleBotText(c *gin.Context) {
+func handleBot(c *gin.Context) {
 	botSession := BotSession{}
 	if err := c.ShouldBindJSON(&botSession); err != nil {
 		logrus.Println(err)
@@ -106,8 +106,8 @@ func handleBotText(c *gin.Context) {
 		text := botSession.Request
 		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
 	case "Audio":
-		text := botSession.Request
-		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
+		audio := botSession.Request
+		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, audio)
 	}
 	if err != nil {
 		logrus.Println(err)
@@ -122,9 +122,6 @@ func handleBotText(c *gin.Context) {
 			"messages": fulfillmentMessages,
 		},
 	})
-}
-func handleBotVoice(c *gin.Context) {
-
 }
 //BotSession is data change between bot and api
 type BotSession struct {
