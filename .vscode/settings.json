@@ -6,6 +6,8 @@
         "holoname",
         "jsonpb",
         "protobuf",
+        "sdatetime",
+        "sfrom",
         "shwx"
     ]
 }

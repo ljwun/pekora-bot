@@ -19,17 +19,17 @@ const (
 )
 
 //DetectIntentText : Detect Intent via text and get text message from dialogflow
-func DetectIntentText(projectID, sessionID, languageCode, text string) (string, error) {
+func DetectIntentText(projectID, sessionID, languageCode, text string) (string, []string, error) {
 	ctx := context.Background()
 
 	sessionClient, err := dialogflow.NewSessionsClient(ctx)
 	if err != nil {
-		return "", err
+		return "", []string{}, err
 	}
 	defer sessionClient.Close()
 
 	if projectID == "" || sessionID == "" {
-		return "", fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
+		return "", []string{}, fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
 	}
 
 	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
@@ -40,13 +40,13 @@ func DetectIntentText(projectID, sessionID, languageCode, text string) (string, 
 
 	response, err := sessionClient.DetectIntent(ctx, &request)
 	if err != nil {
-		return "", err
+		return "", []string{}, err
 	}
 
 	queryResult := response.GetQueryResult()
 	fulfillmentText := queryResult.GetFulfillmentText()
-	fmt.Println(queryResult.FulfillmentMessages[0].GetText().Text)
-	return fulfillmentText, nil
+	fulfillmentMessages := queryResult.FulfillmentMessages[0].GetText().Text
+	return fulfillmentText, fulfillmentMessages, nil
 }
 
 //DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
@@ -98,16 +98,17 @@ func handleBotText(c *gin.Context) {
 	sessionID := botSession.SessionID
 
 	var (
-		result string
+		fulfillmentText string
+		fulfillmentMessages []string
 		err    error
 	)
 	switch botSession.RequestType {
 	case "Text":
 		text := botSession.Request
-		result, err = DetectIntentText(projectID, sessionID, languageCode, text)
+		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
 	case "Audio":
 		text := botSession.Request
-		result, err = DetectIntentText(projectID, sessionID, languageCode, text)
+		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
 	}
 	if err != nil {
 		logrus.Println(err)
@@ -118,7 +119,8 @@ func handleBotText(c *gin.Context) {
 		"projectID":    projectID,
 		"languageCode": languageCode,
 		"response": gin.H{
-			"text": result,
+			"text": fulfillmentText,
+			"messages": fulfillmentMessages,
 		},
 	})
 }
