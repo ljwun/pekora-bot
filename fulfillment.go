@@ -30,9 +30,11 @@ func handleWebhook(c *gin.Context) {
 				params["date-time"].GetStringValue(),
 				params["holoname"].GetStringValue())
 		}else{
-			msg = fmt.Sprintf("Intent:%s\nholoname:%s\n%s", wReq.QueryResult.Intent.DisplayName, params["holoname"].GetStringValue(),
-				fmt.Sprintf("from:\n%v\nto:\n%v", params["date-time"].GetStructValue().Fields["startDate"].GetStringValue(),
-													params["date-time"].GetStructValue().Fields["endDate"].GetStringValue()))
+			msg = fmt.Sprintf("Intent:%s\nholoname:%s\nfrom:\n%v\nto:\n%v",
+				wReq.QueryResult.Intent.DisplayName,
+				params["holoname"].GetStringValue(),
+				params["date-time"].GetStructValue().Fields["startDate"].GetStringValue(),
+				params["date-time"].GetStructValue().Fields["endDate"].GetStringValue())
 		}
 	case "webhookDemo":
 		msg = "2"
