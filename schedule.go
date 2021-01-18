@@ -32,6 +32,7 @@ type StreamStatus struct {
 func getSchedule(names []string, datetime ...time.Time)(string,error){
 	for i := range datetime{
 		datetime[i] = datetime[i].In(time.FixedZone("UTC+9", 9*60*60))
+		fmt.Println(datetime[i])
 	}
 	message := ""
 	now := time.Now().In(time.FixedZone("UTC+9",9*60*60))
@@ -60,6 +61,7 @@ func getSchedule(names []string, datetime ...time.Time)(string,error){
 	//最接近範圍使用1 millisecond
 	start := today.AddDate(0,0,-1)
 	end := today.AddDate(0,0,+2).Add(time.Duration(-1)*time.Millisecond)
+	fmt.Printf("start : %v     end : %v\n",start, end)
 	//判斷是否在時間內
 	flag := false
 	switch len(datetime){
