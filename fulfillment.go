@@ -44,6 +44,7 @@ func handleWebhook(c *gin.Context) {
 			if err!=nil{
 				c.AbortWithError(http.StatusBadRequest, err)
 			}
+			fmt.Println(message)
 			msg = message
 		} else {
 			datetime := struct {
@@ -68,6 +69,7 @@ func handleWebhook(c *gin.Context) {
 			if err!=nil{
 				c.AbortWithError(http.StatusBadRequest, err)
 			}
+			fmt.Println(message)
 			msg = message
 		}
 	case "webhookDemo":
