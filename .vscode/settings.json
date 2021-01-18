@@ -5,6 +5,7 @@
         "dialogflowpb",
         "holoname",
         "jsonpb",
+        "pekora",
         "protobuf",
         "sdatetime",
         "sfrom",

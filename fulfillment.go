@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/jsonpb"
@@ -35,10 +35,10 @@ func handleWebhook(c *gin.Context) {
 				members = append(members, member.GetStringValue())
 			}
 		}
-		msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
+		// msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
 		//時間
 		if params["date-time"].GetStringValue() != "" {
-			msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
+			// msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
 		} else {
 			datetime := struct {
 				start string
@@ -55,7 +55,14 @@ func handleWebhook(c *gin.Context) {
 				datetime.start = params["date-time"].GetStructValue().Fields["startTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endTime"].GetStringValue()
 			}
-			msg = fmt.Sprintf("%sfrom:\n%v\nto:\n%v", msg, datetime.start, datetime.end)
+			start,_ := time.Parse(time.RFC3339, datetime.start)
+			end,_ := time.Parse(time.RFC3339, datetime.end)
+			// msg = fmt.Sprintf("%sfrom:\n%v\nto:\n%v", msg, datetime.start, datetime.end)
+			message, err := getSchedule(members, start, end)
+			if err!=nil{
+				c.AbortWithError(http.StatusBadRequest, err)
+			}
+			msg = message
 		}
 	case "webhookDemo":
 		msg = "2"
@@ -79,7 +86,7 @@ func handleWebhook(c *gin.Context) {
 	m := jsonpb.Marshaler{}
 	err := m.Marshal(c.Writer, &wRes)
 	if err != nil {
-		c.AbortWithError(http.StatusOK, err)
+		c.AbortWithError(http.StatusBadRequest, err)
 	}
 }
 //超出時間表的範圍	=>	PEKORA我只知道最近這三天喔
