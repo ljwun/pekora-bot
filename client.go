@@ -108,8 +108,6 @@ func handleBot(c *gin.Context) {
 		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
 	case "Audio":
 		audio := botSession.RequestAudio
-		fmt.Println(len(audio))
-		fmt.Println(audio[:10])
 		fulfillmentText, fulfillmentMessages, err = DetectIntentAudio(projectID, sessionID, languageCode, audio)
 	}
 	if err != nil {
