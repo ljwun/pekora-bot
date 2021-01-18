@@ -38,15 +38,25 @@ func handleWebhook(c *gin.Context) {
 		// msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
 		//時間
 		fmt.Println("now ",params["date-time"].GetStringValue())
-		if params["date-time"].GetStringValue() != "" {
+		if params["date-time"].GetStringValue() != "" || params["date_time"].GetStringValue() != "" {
 			// msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
-			sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
-			message, err := getSchedule(members, sTime)
-			if err!=nil{
-				c.AbortWithError(http.StatusBadRequest, err)
+			if params["date-time"].GetStringValue() != ""{
+				sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
+				message, err := getSchedule(members, sTime)
+				if err!=nil{
+					c.AbortWithError(http.StatusBadRequest, err)
+				}
+				fmt.Println(message)
+				msg = message
+			}else{
+				sTime,_ := time.Parse(time.RFC3339, params["date_time"].GetStringValue())
+				message, err := getSchedule(members, sTime)
+				if err!=nil{
+					c.AbortWithError(http.StatusBadRequest, err)
+				}
+				fmt.Println(message)
+				msg = message
 			}
-			fmt.Println(message)
-			msg = message
 		} else {
 			datetime := struct {
 				start string
