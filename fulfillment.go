@@ -39,7 +39,7 @@ func handleWebhook(c *gin.Context) {
 		//時間
 		if params["date-time"].GetStringValue() != "" {
 			// msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
-			sTime := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
+			sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
 			message, err := getSchedule(members, sTime)
 			if err!=nil{
 				c.AbortWithError(http.StatusBadRequest, err)
