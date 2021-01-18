@@ -30,6 +30,9 @@ type StreamStatus struct {
 	ConcurrentViewers	int	`json:"concurrentViewers"`
 }
 func getSchedule(names []string, datetime ...time.Time)(string,error){
+	for i := range datetime{
+		datetime[i] = datetime[i].In(time.FixedZone("UTC+9", 9*60*60))
+	}
 	message := ""
 	now := time.Now().In(time.FixedZone("UTC+9",9*60*60))
 	yyyy, mm, dd := now.Date()
