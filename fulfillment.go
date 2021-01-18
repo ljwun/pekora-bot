@@ -36,29 +36,17 @@ func handleWebhook(c *gin.Context) {
 			}
 		}
 		// msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
-		//時間
-		
-		if params["date-time"].GetStringValue() != "" || params["date_time"].GetStringValue() != "" {
+		//時間	
+		if params["date-time"].GetStringValue() != ""  {
 			// msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
-			if params["date-time"].GetStringValue() != ""{
-				fmt.Println("now ",params["date-time"].GetStringValue())
-				sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
-				message, err := getSchedule(members, sTime)
-				if err!=nil{
-					c.AbortWithError(http.StatusBadRequest, err)
-				}
-				fmt.Println(message)
-				msg = message
-			}else{
-				fmt.Println("now ",params["date_time"].GetStringValue())
-				sTime,_ := time.Parse(time.RFC3339, params["date_time"].GetStringValue())
-				message, err := getSchedule(members, sTime)
-				if err!=nil{
-					c.AbortWithError(http.StatusBadRequest, err)
-				}
-				fmt.Println(message)
-				msg = message
+			fmt.Println("now ",params["date-time"].GetStringValue())
+			sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
+			message, err := getSchedule(members, sTime)
+			if err!=nil{
+				c.AbortWithError(http.StatusBadRequest, err)
 			}
+			fmt.Println(message)
+			msg = message
 		} else {
 			datetime := struct {
 				start string
@@ -71,27 +59,38 @@ func handleWebhook(c *gin.Context) {
 			case params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue() != "":
 				datetime.start = params["date-time"].GetStructValue().Fields["startDateTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endDateTime"].GetStringValue()
-			default:
+			case params["date-time"].GetStructValue().Fields["startTime"].GetStringValue() != "":
 				datetime.start = params["date-time"].GetStructValue().Fields["startTime"].GetStringValue()
 				datetime.end = params["date-time"].GetStructValue().Fields["endTime"].GetStringValue()
+			default:
+				fmt.Println("Magic vault: ", params["date-time"])
 			}
 			start,_ := time.Parse(time.RFC3339, datetime.start)
 			end,_ := time.Parse(time.RFC3339, datetime.end)
 			// msg = fmt.Sprintf("%sfrom:\n%v\nto:\n%v", msg, datetime.start, datetime.end)
-			if start.Before(end){
-				message, err := getSchedule(members, start, end)
-				if err!=nil{
-					c.AbortWithError(http.StatusBadRequest, err)
+			if !start.IsZero()&&!end.IsZero(){
+				if start.Before(end){
+					message, err := getSchedule(members, start, end)
+					if err!=nil{
+						c.AbortWithError(http.StatusBadRequest, err)
+					}
+					fmt.Println(message)
+					msg = message
+				}else{
+					message, err := getSchedule(members, end, start)
+					if err!=nil{
+						c.AbortWithError(http.StatusBadRequest, err)
+					}
+					fmt.Println(message)
+					msg = message
 				}
-				fmt.Println(message)
-				msg = message
 			}else{
-				message, err := getSchedule(members, end, start)
-				if err!=nil{
-					c.AbortWithError(http.StatusBadRequest, err)
-				}
-				fmt.Println(message)
-				msg = message
+				message, err := getSchedule(members, time.Now())
+					if err!=nil{
+						c.AbortWithError(http.StatusBadRequest, err)
+					}
+					fmt.Println(message)
+					msg = message
 			}
 		}
 	case "webhookDemo":

@@ -131,7 +131,7 @@ func getSchedule(names []string, datetime ...time.Time)(string,error){
 					}else{
 						// 還沒開台
 						// 上方已經定義
-						subMessage = fmt.Sprintf("[%v]目前已經關台了!\nLimk:%s", name, last.URL)
+						subMessage = fmt.Sprintf("[%v]目前已經關台了!(原直播紀錄不再此)\nLink:%s", name, last.URL)
 					}
 				}
 				message = fmt.Sprintf("%s\n%s", message, subMessage)
