@@ -38,6 +38,7 @@ func handleWebhook(c *gin.Context) {
 		// msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
 		//時間
 		if params["date-time"].GetStringValue() != "" {
+			fmt.Println("now ",params["date-time"].GetStringValue())
 			// msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
 			sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
 			message, err := getSchedule(members, sTime)
