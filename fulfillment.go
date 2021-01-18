@@ -65,12 +65,21 @@ func handleWebhook(c *gin.Context) {
 			start,_ := time.Parse(time.RFC3339, datetime.start)
 			end,_ := time.Parse(time.RFC3339, datetime.end)
 			// msg = fmt.Sprintf("%sfrom:\n%v\nto:\n%v", msg, datetime.start, datetime.end)
-			message, err := getSchedule(members, start, end)
-			if err!=nil{
-				c.AbortWithError(http.StatusBadRequest, err)
+			if start.Before(end){
+				message, err := getSchedule(members, start, end)
+				if err!=nil{
+					c.AbortWithError(http.StatusBadRequest, err)
+				}
+				fmt.Println(message)
+				msg = message
+			}else{
+				message, err := getSchedule(members, end, start)
+				if err!=nil{
+					c.AbortWithError(http.StatusBadRequest, err)
+				}
+				fmt.Println(message)
+				msg = message
 			}
-			fmt.Println(message)
-			msg = message
 		}
 	case "webhookDemo":
 		msg = "2"
