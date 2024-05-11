@@ -18,7 +18,7 @@ const (
 	languageCode string = "zh-TW"
 )
 
-//DetectIntentText : Detect Intent via text and get text message from dialogflow
+// DetectIntentText : Detect Intent via text and get text message from dialogflow
 func DetectIntentText(projectID, sessionID, languageCode, text string) (string, []string, error) {
 	ctx := context.Background()
 
@@ -49,7 +49,7 @@ func DetectIntentText(projectID, sessionID, languageCode, text string) (string, 
 	return fulfillmentText, fulfillmentMessages, nil
 }
 
-//DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
+// DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
 func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []byte) (string, []string, error) {
 	ctx := context.Background()
 
@@ -98,9 +98,9 @@ func handleBot(c *gin.Context) {
 	}
 	sessionID := botSession.SessionID
 	var (
-		fulfillmentText string
+		fulfillmentText     string
 		fulfillmentMessages []string
-		err    error
+		err                 error
 	)
 	switch botSession.RequestType {
 	case "Text":
@@ -118,15 +118,16 @@ func handleBot(c *gin.Context) {
 		"sessionID":    sessionID,
 		"languageCode": languageCode,
 		"response": gin.H{
-			"text": fulfillmentText,
+			"text":     fulfillmentText,
 			"messages": fulfillmentMessages,
 		},
 	})
 }
-//BotSession is data change between bot and api
+
+// BotSession is data change between bot and api
 type BotSession struct {
-	SessionID   string	`json:"sessionID"`
-	RequestType string	`json:"requestType"`
-	RequestAudio     []byte	`json:"voice"`
-	RequestText     string	`json:"text"`
+	SessionID    string `json:"sessionID"`
+	RequestType  string `json:"requestType"`
+	RequestAudio []byte `json:"voice"`
+	RequestText  string `json:"text"`
 }

@@ -22,27 +22,27 @@ func handleWebhook(c *gin.Context) {
 	fmt.Printf("%10s : %+v\n", "Intent", wReq.QueryResult.Intent.DisplayName)
 	fmt.Printf("%10s : %+v\n", "Parameter", wReq.QueryResult.Parameters)
 	fmt.Printf("%10s : %+v\n", "Text", wReq.QueryResult.QueryText)
-	msg := fmt.Sprintln("Intent:",wReq.QueryResult.Intent.DisplayName)
+	msg := fmt.Sprintln("Intent:", wReq.QueryResult.Intent.DisplayName)
 	params := wReq.QueryResult.Parameters.Fields
 	switch wReq.QueryResult.Intent.DisplayName {
 	case "開台詢問":
 		//成員
 		members := []string{}
-		if params["holoname"].GetStringValue() != ""{
+		if params["holoname"].GetStringValue() != "" {
 			members = append(members, params["holoname"].GetStringValue())
-		}else{
-			for _, member := range params["holoname"].GetListValue().Values{
+		} else {
+			for _, member := range params["holoname"].GetListValue().Values {
 				members = append(members, member.GetStringValue())
 			}
 		}
 		// msg = fmt.Sprintf("%sNames:%s\n", msg, strings.Join(members, ","))
-		//時間	
-		if params["date-time"].GetStringValue() != ""  {
+		//時間
+		if params["date-time"].GetStringValue() != "" {
 			// msg = fmt.Sprintf("%sdatetime:%s",msg, params["date-time"].GetStringValue())
-			fmt.Println("now ",params["date-time"].GetStringValue())
-			sTime,_ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
+			fmt.Println("now ", params["date-time"].GetStringValue())
+			sTime, _ := time.Parse(time.RFC3339, params["date-time"].GetStringValue())
 			message, err := getSchedule(members, sTime)
-			if err!=nil{
+			if err != nil {
 				c.AbortWithError(http.StatusBadRequest, err)
 			}
 			fmt.Println(message)
@@ -65,32 +65,32 @@ func handleWebhook(c *gin.Context) {
 			default:
 				fmt.Println("Magic vault: ", params["date-time"])
 			}
-			start,_ := time.Parse(time.RFC3339, datetime.start)
-			end,_ := time.Parse(time.RFC3339, datetime.end)
+			start, _ := time.Parse(time.RFC3339, datetime.start)
+			end, _ := time.Parse(time.RFC3339, datetime.end)
 			// msg = fmt.Sprintf("%sfrom:\n%v\nto:\n%v", msg, datetime.start, datetime.end)
-			if !start.IsZero()&&!end.IsZero(){
-				if start.Before(end){
+			if !start.IsZero() && !end.IsZero() {
+				if start.Before(end) {
 					message, err := getSchedule(members, start, end)
-					if err!=nil{
+					if err != nil {
 						c.AbortWithError(http.StatusBadRequest, err)
 					}
 					fmt.Println(message)
 					msg = message
-				}else{
+				} else {
 					message, err := getSchedule(members, end, start)
-					if err!=nil{
+					if err != nil {
 						c.AbortWithError(http.StatusBadRequest, err)
 					}
 					fmt.Println(message)
 					msg = message
 				}
-			}else{
+			} else {
 				message, err := getSchedule(members, time.Now())
-					if err!=nil{
-						c.AbortWithError(http.StatusBadRequest, err)
-					}
-					fmt.Println(message)
-					msg = message
+				if err != nil {
+					c.AbortWithError(http.StatusBadRequest, err)
+				}
+				fmt.Println(message)
+				msg = message
 			}
 		}
 	case "webhookDemo":
@@ -118,13 +118,13 @@ func handleWebhook(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 	}
 }
+
 //超出時間表的範圍	=>	PEKORA我只知道最近這三天喔
 //詢問時間範圍		=>	對指定人物在時間內最接近當前時間的那一筆進行youtube data的獲取
 // 						過去: 查詢是否已經關台
 //						現在: 查詢是否正式開台
 // 						過去: 查詢是否提早開台
 //單一時間			=>	對指定人物在時間表內最接近當前時間的那一筆進行youtube data的獲取，
-							// 若在直播:現在在直播中喔，現在有xxx人在看，已經直播xxx分鐘了(附加網址)
-							// 若直播結束:直播在xxx分鐘前已經結束了，記錄檔在此(附加網址)
-							// 若還沒開始直播:直播還有xx分鐘就要開始了，現在有xxx人在等待(附加網址)
-
+// 若在直播:現在在直播中喔，現在有xxx人在看，已經直播xxx分鐘了(附加網址)
+// 若直播結束:直播在xxx分鐘前已經結束了，記錄檔在此(附加網址)
+// 若還沒開始直播:直播還有xx分鐘就要開始了，現在有xxx人在等待(附加網址)
