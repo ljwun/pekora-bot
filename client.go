@@ -18,78 +18,6 @@ const (
 	languageCode string = "zh-TW"
 )
 
-// DetectIntentText : Detect Intent via text and get text message from dialogflow
-func DetectIntentText(projectID, sessionID, languageCode, text string) (string, []string, error) {
-	ctx := context.Background()
-
-	sessionClient, err := dialogflow.NewSessionsClient(ctx)
-	if err != nil {
-		return "", []string{}, err
-	}
-	defer sessionClient.Close()
-
-	if projectID == "" || sessionID == "" {
-		return "", []string{}, fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
-	}
-
-	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
-	textInput := dialogflowpb.TextInput{Text: text, LanguageCode: languageCode}
-	queryTextInput := dialogflowpb.QueryInput_Text{Text: &textInput}
-	queryInput := dialogflowpb.QueryInput{Input: &queryTextInput}
-	request := dialogflowpb.DetectIntentRequest{Session: sessionPath, QueryInput: &queryInput}
-
-	response, err := sessionClient.DetectIntent(ctx, &request)
-	if err != nil {
-		return "", []string{}, err
-	}
-
-	queryResult := response.GetQueryResult()
-	fulfillmentText := queryResult.GetFulfillmentText()
-	fulfillmentMessages := queryResult.FulfillmentMessages[0].GetText().Text
-	return fulfillmentText, fulfillmentMessages, nil
-}
-
-// DetectIntentAudio : Detect Intent via audio and get text message from dialogflow
-func DetectIntentAudio(projectID, sessionID, languageCode string, audioBytes []byte) (string, []string, error) {
-	ctx := context.Background()
-
-	sessionClient, err := dialogflow.NewSessionsClient(ctx)
-	if err != nil {
-		return "", []string{}, err
-	}
-	defer sessionClient.Close()
-
-	if projectID == "" || sessionID == "" {
-		return "", []string{}, fmt.Errorf("Received empty project (%s) or session (%s)", projectID, sessionID)
-	}
-
-	sessionPath := fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, sessionID)
-
-	// In this example, we hard code the encoding and sample rate for simplicity.
-	audioConfig := dialogflowpb.InputAudioConfig{AudioEncoding: dialogflowpb.AudioEncoding_AUDIO_ENCODING_OGG_OPUS, SampleRateHertz: 16000, LanguageCode: languageCode}
-
-	queryAudioInput := dialogflowpb.QueryInput_AudioConfig{AudioConfig: &audioConfig}
-
-	// audioBytes, err := ioutil.ReadFile(audioFile)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	queryInput := dialogflowpb.QueryInput{Input: &queryAudioInput}
-	request := dialogflowpb.DetectIntentRequest{Session: sessionPath, QueryInput: &queryInput, InputAudio: audioBytes}
-
-	response, err := sessionClient.DetectIntent(ctx, &request)
-	if err != nil {
-		return "", []string{}, err
-	}
-
-	queryResult := response.GetQueryResult()
-	fmt.Printf("Query : %+v\n", queryResult.QueryText)
-	fulfillmentText := queryResult.GetFulfillmentText()
-	fulfillmentMessages := queryResult.FulfillmentMessages[0].GetText().Text
-	return fulfillmentText, fulfillmentMessages, nil
-}
-
 func handleBot(c *gin.Context) {
 	botSession := BotSession{}
 	if err := c.ShouldBindJSON(&botSession); err != nil {
@@ -98,17 +26,20 @@ func handleBot(c *gin.Context) {
 	}
 	sessionID := botSession.SessionID
 	var (
-		fulfillmentText     string
-		fulfillmentMessages []string
-		err                 error
+		text             string
+		messages         []string
+		err              error
+		dialogFlowClient = DialogFlowClient{
+			SessionID:    sessionID,
+			ProjectID:    projectID,
+			LanguageCode: languageCode,
+		}
 	)
 	switch botSession.RequestType {
 	case "Text":
-		text := botSession.RequestText
-		fulfillmentText, fulfillmentMessages, err = DetectIntentText(projectID, sessionID, languageCode, text)
+		text, messages, err = dialogFlowClient.DetectIntentWithText(context.Background(), botSession.RequestText)
 	case "Audio":
-		audio := botSession.RequestAudio
-		fulfillmentText, fulfillmentMessages, err = DetectIntentAudio(projectID, sessionID, languageCode, audio)
+		text, messages, err = dialogFlowClient.DetectIntentWithAudio(context.Background(), botSession.RequestAudio)
 	}
 	if err != nil {
 		logrus.Println(err)
@@ -118,8 +49,8 @@ func handleBot(c *gin.Context) {
 		"sessionID":    sessionID,
 		"languageCode": languageCode,
 		"response": gin.H{
-			"text":     fulfillmentText,
-			"messages": fulfillmentMessages,
+			"text":     text,
+			"messages": messages,
 		},
 	})
 }
@@ -130,4 +61,63 @@ type BotSession struct {
 	RequestType  string `json:"requestType"`
 	RequestAudio []byte `json:"voice"`
 	RequestText  string `json:"text"`
+}
+
+type DialogFlowClient struct {
+	SessionID    string
+	ProjectID    string
+	LanguageCode string
+}
+
+func (c *DialogFlowClient) DetectIntentWithText(ctx context.Context, text string) (string, []string, error) {
+	request := dialogflowpb.DetectIntentRequest{
+		QueryInput: &dialogflowpb.QueryInput{
+			Input: &dialogflowpb.QueryInput_Text{
+				Text: &dialogflowpb.TextInput{
+					Text:         text,
+					LanguageCode: c.LanguageCode,
+				},
+			},
+		},
+	}
+	return c.detectIntent(ctx, &request)
+}
+
+func (c *DialogFlowClient) DetectIntentWithAudio(ctx context.Context, audioBytes []byte) (string, []string, error) {
+	request := dialogflowpb.DetectIntentRequest{
+		QueryInput: &dialogflowpb.QueryInput{
+			Input: &dialogflowpb.QueryInput_AudioConfig{
+				AudioConfig: &dialogflowpb.InputAudioConfig{
+					AudioEncoding:   dialogflowpb.AudioEncoding_AUDIO_ENCODING_OGG_OPUS,
+					SampleRateHertz: 16000,
+					LanguageCode:    languageCode,
+				},
+			},
+		},
+		InputAudio: audioBytes,
+	}
+	return c.detectIntent(ctx, &request)
+}
+
+func (c *DialogFlowClient) detectIntent(ctx context.Context, request *dialogflowpb.DetectIntentRequest) (string, []string, error) {
+	sessionClient, err := dialogflow.NewSessionsClient(ctx)
+	if err != nil {
+		return "", []string{}, err
+	}
+	defer sessionClient.Close()
+
+	if projectID == "" || c.SessionID == "" {
+		return "", []string{}, fmt.Errorf("received empty project (%s) or session (%s)", projectID, c.SessionID)
+	}
+	request.Session = fmt.Sprintf("projects/%s/agent/sessions/%s", projectID, c.SessionID)
+	response, err := sessionClient.DetectIntent(ctx, request)
+	if err != nil {
+		return "", []string{}, err
+	}
+
+	queryResult := response.GetQueryResult()
+	fmt.Printf("Query : %+v\n", queryResult.QueryText)
+	fulfillmentText := queryResult.GetFulfillmentText()
+	fulfillmentMessages := queryResult.FulfillmentMessages[0].GetText().Text
+	return fulfillmentText, fulfillmentMessages, nil
 }
