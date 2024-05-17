@@ -1,4 +1,5 @@
 module dfapi
+
 // +heroku goVersion go1.15
 go 1.15
 
@@ -8,4 +9,5 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/sirupsen/logrus v1.7.0
 	google.golang.org/genproto v0.0.0-20210114201628-6edceaf6022f
+	google.golang.org/protobuf v1.25.0
 )
